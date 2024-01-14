@@ -1,24 +1,35 @@
-const express = require('express')
-const app = express()
-const port = 3000
-const config = {
+const express = require('express');
+const mysql = require('mysql');
+const app = express();
+const port = 3000;
+
+const pool = mysql.createPool({
+    connectionLimit : 10,
     host: 'db',
     user: 'root',
     password: 'root',
     database:'nodedb'
-};
-const mysql = require('mysql')
-const connection = mysql.createConnection(config)
+});
 
-const sql = `INSERT INTO people(name) values('Wesley')`
-connection.query(sql)
-connection.end()
+pool.query(`INSERT INTO people(name) values('Leonardo')`, (err) => {
+    if (err) {
+        console.error('Erro ao inserir no banco de dados', err);
+    }
+});
 
+app.get('/', (req, res) => {
+    pool.query('SELECT name FROM people', (err, results) => {
+        if (err) {
+            console.error('Erro ao consultar o banco de dados', err);
+            res.status(500).send('Erro ao consultar o banco de dados');
+            return;
+        }
 
-app.get('/', (req,res) => {
-    res.send('<h1>Full Cycle</h1>')
-})
+        let names = results.map(row => row.name).join('<br>');
+        res.send('<h1>Full Cycle Rocks!</h1><p>' + names + '</p>');
+    });
+});
 
-app.listen(port, ()=> {
-    console.log('Rodando na porta ' + port)
-})
+app.listen(port, () => {
+    console.log('Rodando na porta ' + port);
+});
